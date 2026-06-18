@@ -13,12 +13,6 @@ public class BookMyStayApp {
 
         inventory.displayInventory();
 
-        System.out.println("\nSingle Room Price : "
-                + inventory.getPrice("Single"));
-
-        System.out.println("Suite Availability : "
-                + inventory.getAvailableRooms("Suite"));
-
         System.out.println("===== SEARCHING ROOMS =====");
 
         SearchService searchService =
@@ -35,8 +29,7 @@ public class BookMyStayApp {
         searchService.searchRoom("Double");
 
         System.out.println("BOOKING QUEUE SERVICE");
-        BookingQueueService queue =
-                new BookingQueueService();
+        BookingQueueService queue = new BookingQueueService();
 
         Reservation r1 =
                 new Reservation(
@@ -69,7 +62,25 @@ public class BookMyStayApp {
             System.out.println(
                     reservation.getReservationId()
                             + " processed");
+
         }
+        System.out.println("==============BOOKING CONFIRMATION==========================");
+        BookingService bookingService =
+                new BookingService(inventory);
+
+        while(queue.hasPendingRequests()) {
+
+            Reservation reservation =
+                    queue.getNextRequest();
+
+            bookingService.confirmBooking(
+                    reservation);
+        }
+
+        System.out.println(
+                "\nRemaining Rooms : "
+                        + inventory.getAvailableRooms(
+                        "Single"));
     }
 
 }
