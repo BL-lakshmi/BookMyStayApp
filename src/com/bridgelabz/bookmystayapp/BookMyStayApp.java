@@ -3,113 +3,185 @@ package com.bridgelabz.bookmystayapp;
 import java.sql.SQLOutput;
 
 public class BookMyStayApp {
+    private static InventoryService inventoryService;
+    private static BookingQueueService bookingQueueService;
+    private static BookingService bookingService;
+    private static ServiceManager serviceManager;
+    private static ReportService reportService;
+
+    private static Reservation reservation1;
+    private static Reservation reservation2;
+
     public static void main(String[] args) {
 
-        InventoryService inventory = new InventoryService();
+        System.out.println("=================================");
+        System.out.println("      BOOK MY STAY APP");
+        System.out.println("=================================");
 
-        inventory.addRoomType("Single", 10, 2000);
-        inventory.addRoomType("Double", 5, 3500);
-        inventory.addRoomType("Suite", 2, 7000);
+        initializeServices();
+        inventorySetup();
+        searchRooms();
+        bookingRequest();
+        reservationConfirmation();
+        addOnServices();
+        bookingHistoryAndReports();
+    }
 
-        System.out.println("===== HOTEL INVENTORY USECASE-1=====");
+    private static void initializeServices() {
 
-        inventory.displayInventory();
+        inventoryService = new InventoryService();
 
-        System.out.println("===== SEARCHING ROOMS USECASE-2=====");
+        bookingQueueService = new BookingQueueService();
+
+        bookingService =
+                new BookingService(inventoryService);
+
+        serviceManager =
+                new ServiceManager();
+
+        reportService =
+                new ReportService();
+    }
+
+    // ==========================
+    // USE CASE 1
+    // ==========================
+
+    private static void inventorySetup() {
+
+        System.out.println("\n===== USE CASE 1 : INVENTORY SETUP =====");
+
+        inventoryService.addRoomType(
+                "Single",
+                5,
+                2000);
+
+        inventoryService.addRoomType(
+                "Double",
+                3,
+                3500);
+
+        inventoryService.addRoomType(
+                "Suite",
+                2,
+                7000);
+
+        inventoryService.displayInventory();
+    }
+
+    // ==========================
+    // USE CASE 2
+    // ==========================
+
+    private static void searchRooms() {
+
+        System.out.println("\n===== USE CASE 2 : ROOM SEARCH =====");
 
         SearchService searchService =
-                new SearchService(inventory);
-
-        System.out.println("Searching Single Room");
+                new SearchService(inventoryService);
 
         searchService.searchRoom("Single");
 
-        System.out.println();
+        searchService.searchRoom("Suite");
+    }
 
-        System.out.println("Searching Double Room");
+    // ==========================
+    // USE CASE 3
+    // ==========================
 
-        searchService.searchRoom("Double");
+    private static void bookingRequest() {
 
-        System.out.println("BOOKING QUEUE SERVICE USECASE-3");
-        BookingQueueService queue = new BookingQueueService();
+        System.out.println("\n===== USE CASE 3 : BOOKING REQUEST =====");
 
-        Reservation r1 =
+        reservation1 =
                 new Reservation(
                         "R101",
                         "Lakshmi",
                         "Single");
 
-        Reservation r2 =
+        reservation2 =
                 new Reservation(
                         "R102",
                         "Kumar",
                         "Double");
-        Reservation r3 =
-                new Reservation(
-                        "R103",
-                        "Priya",
-                        "Suite");
 
-        queue.addBookingRequest(r1);
-        queue.addBookingRequest(r2);
-        queue.addBookingRequest(r3);
+        bookingQueueService.addBookingRequest(
+                reservation1);
 
-        System.out.println("\nProcessing Queue");
+        bookingQueueService.addBookingRequest(
+                reservation2);
 
-        while(queue.hasPendingRequests()) {
+        System.out.println("Booking requests added to queue");
+    }
 
-            Reservation reservation =
-                    queue.getNextRequest();
+    // ==========================
+    // USE CASE 4
+    // ==========================
 
-            System.out.println(
-                    reservation.getReservationId()
-                            + " processed");
+    private static void reservationConfirmation() {
 
-        }
-        System.out.println("==============BOOKING CONFIRMATION USECASE-4===================");
-        BookingService bookingService =
-                new BookingService(inventory);
+        System.out.println("\n===== USE CASE 4 : ROOM ALLOCATION =====");
 
-        while(queue.hasPendingRequests()) {
+        while (bookingQueueService.hasPendingRequests()) {
 
             Reservation reservation =
-                    queue.getNextRequest();
+                    bookingQueueService.getNextRequest();
 
             bookingService.confirmBooking(
                     reservation);
+
+            reportService.addReservation(
+                    reservation);
         }
 
-        System.out.println(
-                "\nRemaining Rooms : "
-                        + inventory.getAvailableRooms(
-                        "Single"));
+        System.out.println("\nInventory After Booking:");
 
-        System.out.println("MORE SERVICES ADDED USECASE-5");
-        Reservation reservation =
-                new Reservation(
-                        "R101",
-                        "Lakshmi",
-                        "Single");
+        inventoryService.displayInventory();
+    }
 
-        ServiceManager serviceManager =
-                new ServiceManager();
+    // ==========================
+    // USE CASE 5
+    // ==========================
+
+    private static void addOnServices() {
+
+        System.out.println("\n===== USE CASE 5 : ADD-ON SERVICES =====");
 
         serviceManager.addService(
-                reservation.getReservationId(),
+                reservation1.getReservationId(),
                 new Service(
                         "Breakfast",
                         500));
 
         serviceManager.addService(
-                reservation.getReservationId(),
+                reservation1.getReservationId(),
+                new Service(
+                        "Airport Pickup",
+                        1000));
+
+        serviceManager.addService(
+                reservation1.getReservationId(),
                 new Service(
                         "Spa",
                         1500));
 
+        double totalCost =
+                serviceManager.calculateTotalServiceCost(
+                        reservation1.getReservationId());
+
         System.out.println(
-                serviceManager
-                        .calculateTotalServiceCost(
-                                reservation.getReservationId()));
+                "Total Add-On Cost = " +
+                        totalCost);
     }
 
+    // ==========================
+    // USE CASE 6
+    // ==========================
+
+    private static void bookingHistoryAndReports() {
+
+        System.out.println("\n===== USE CASE 6 : BOOKING HISTORY =====");
+
+        reportService.showAllReservations();
+    }
 }
